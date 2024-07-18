@@ -1,0 +1,53 @@
+# docker compose version
+version: '3.8'
+# all the containers have to declare inside services
+services:
+  user-service:
+    container_name: user-service
+    image: user-service
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      taxnet-net:
+        ipv4_address: ${CONTAINER_NETWORK_IP}
+    ports:
+      - ${APP_HTTP_CONTAINER_PORT}:${SERVER_HTTP_PORT}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped
+  user-migration:
+    image: user-service
+    env_file:
+      - .env
+    command: npm run migrate:run
+    # depends_on:
+    #   - postgres
+    networks:
+      - taxnet-net
+    # postgres
+    # postgres:
+    #   container_name: user-service-db
+    #   image: postgres:13
+    #   volumes:
+    #     - db_data:/var/lib/postgresql/data
+    #   environment:
+    #     POSTGRES_USER: ${DATABASE_USERNAME}
+    #     POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    #     POSTGRES_DB: ${DATABASE_NAME}
+    #   ports:
+    #     - ${DATABASE_CONTAINER_PORT}:${DATABASE_PORT}
+    #   networks:
+    #     - mesx-net
+    #   restart: unless-stopped
+networks:
+  taxnet-net:
+    name: ${TAXNET_NET_NAME}
+    external: true
+
+# save (persist) data
+volumes:
+  db_data: {}
